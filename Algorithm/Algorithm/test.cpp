@@ -1,165 +1,143 @@
-#include "stdio.h"
-#include <iostream>
-#include <cstring>
+#include "stdafx.h"
+#include <iostream>  
+#include <cstdio>  
+#include <vector>
+#include <algorithm>
+#include <functional>
+#include <queue>
+#include <string>
+#include <cmath>
 using namespace std;
-int DivideAndConquer(int a[], int left, int right);
-int N;
-int a[100000];
-class Sequence
-{
-private:
-	int val;
-	int left;
-	int right;
-	int N;
-public:
-	Sequence() {}
-	Sequence(int a, int b, int c) :val(a), left(b), right(c) {}
-	friend Sequence & max(Sequence & a, Sequence & b);
-	friend ostream & operator<< (ostream & os, const Sequence & a);
 
 
-};
-Sequence & max(Sequence & a, Sequence & b)
+struct code
 {
-	if (a.val > b.val)
-		return a;
-	else
-	{
-		if (a.val == b.val)
-		{
-			if (a.left == b.left)
-			{
-				if (a.right <= b.right)
-					return a;
-				else
-					return b;
-			}
-			else
-			{
-				if (a.left <= b.left)
-					return a;
-				else
-					return b;
-			}
-		}
-		return b;
+	char c;
+	int f;
+	int height;
+	code() {}
+	code(int ff) :f(ff) { c = '#'; }
+	friend bool operator <(code c1, code c2) {
+		return c1.f > c2.f;
 	}
-}
-ostream & operator<< (ostream & os, const Sequence & c)
-{
-	os << c.val << " " << a[c.left] << " " << a[c.right];
-	return os;
-}
-Sequence DivideAndConquer2(int a[], int left, int right);
+	void input()
+	{
+		cin >> c;
+		cin >> f;
+		height = 0;
+	}
+};
+priority_queue<code > q;
 
 int main()
 {
-
-
-	cin >> N;
-	for (int i = 0; i < N; i++)
-		scanf("%d", a + i);
-	cout << DivideAndConquer2(a, 0, N - 1);
-}
-
-int max3(int a, int b, int c)
-{
-	int max;
-	max = a > b ? a : b;
-	max = max > c ? max : c;
-	return  max;
-}
-int DivideAndConquer(int a[], int left, int right)          //原型
-{
-
-	if (left == right)          //递归终止条件
+	int n, m;
+	int  output[1000] = { 0 };
+	code cha_hash[200];
+	cin >> n;
+	for (int i = 0; i < n; i++)
 	{
-		if (a[left] > 0)             //若最大值为负数则返回0
-			return a[left];
+		code temp;
+		temp.input();
+		q.push(temp);
+	}
+	cin >> m;
+	int nowHeight = 1, maxHeight = 1;
+	while (q.size() > 1)
+	{
+		code x, y;
+		x = q.top();
+		q.pop();
+		y = q.top();
+		q.pop();
+
+		if (x.c == '#')
+		{
+			nowHeight = x.height;
+		}
+		if (y.c == '#')
+		{
+			nowHeight = y.height;
+		}
+		x.height = nowHeight;
+		y.height = nowHeight;
+
+
+		code sum(x.f + y.f);
+		sum.height = x.height + 1;
+		q.push(sum);
+		cha_hash[int(x.c)] = x;
+		cha_hash[int(y.c)] = y;
+
+
+	}
+	maxHeight = q.top().height;
+	int optimalSum = 0, flag = 0;//最优编码总长度
+	int nowSum = 0;
+
+	for (int i = 0; i < m; i++)
+	{
+		bool check[3000] = { 0 };
+		int checkflag = 1;
+		for (int j = 0; j < n; j++)
+		{
+			char c;
+			string cd;
+			cin >> c;
+			cin >> cd;
+
+
+			if (flag == 0)
+			{
+				optimalSum += (maxHeight - cha_hash[int(c)].height)*cha_hash[int(c)].f;
+
+			}
+			if (cd.length() > maxHeight)
+				checkflag = 0;
+			if (checkflag == 1)
+			{
+				nowSum += cha_hash[int(c)].f*cd.length();
+				int nowVal = 0;
+				for (int j = 0; j <= cd.length() - 1; j++)
+				{
+					nowVal += (cd[j] - '0' + 1)*pow(2, j);
+				}
+				if (check[nowVal] == true)
+					nowSum = 10000;
+				for (int i = cd.length() - 1; i >= 1; i--)
+				{
+					int val = 0;
+					for (int j = 0; j <= i; j++)
+					{
+						val += (cd[j] - '0' + 1)*pow(2, j);
+					}
+					check[val] = true;
+				}
+				if (j == n - 1)
+				{
+					if (nowSum <= optimalSum)
+						output[i] = 1;
+					else
+						output[i] = -1;
+					flag = 1;
+					nowSum = 0;
+				}
+			}
+			else
+			{
+				output[i] = -1;
+				flag = 1;
+				nowSum = 0;
+			}
+		}
+
+	}
+	for (int i = 0; i < m; i++)
+	{
+		if (output[i] == 1)
+			cout << "Yes" << endl;
 		else
-			return 0;
+			cout << "No" << endl;
 	}
-
-	//分
-	int center = (left + right) / 2;
-	int leftMax = DivideAndConquer(a, left, center);
-	int rightMax = DivideAndConquer(a, center + 1, right);
-
-	//治
-	int midMax = 0, midMax_l = 0, midMax_r = 0, sum_l = 0, sum_r = 0;
-	for (int i = center; i >= left; i--)   //中心向左
-	{
-		sum_l += a[i];
-		if (sum_l >= midMax_l)
-			midMax_l = sum_l;
-	}
-	for (int i = center + 1; i <= right; i++)   //中心向左
-	{
-		sum_r += a[i];
-		if (sum_r >= midMax_r)
-			midMax_r = sum_r;
-	}
-	midMax = midMax_l + midMax_r;
-	return max3(leftMax, rightMax, midMax);
-
-}
-
-Sequence DivideAndConquer2(int a[], int left, int right)            //返回最大子列左右值
-{
-
-	if (left == right)          //递归终止条件
-	{
-		if (a[left] >= 0)             //若最大值为负数则返回0
-		{
-			Sequence temp(a[left], left, left);
-			return temp;
-		}
-		else
-		{
-			Sequence temp(0, 0, N - 1);
-			return 	temp;
-
-		}
-	}
-
-	//分
-	int center = (left + right) / 2;
-	Sequence leftMax = DivideAndConquer2(a, left, center);
-	Sequence rightMax = DivideAndConquer2(a, center + 1, right);
-
-	//治
-
-	int midMax_l = 0, midMax_r = 0, sum_l = 0, sum_r = 0, lVal = center, rVal =center+1;
-	int lflag = 0, rflag = 0;
-	for (int i = center; i >= left; i--)   //中心向左
-	{
-		sum_l += a[i];
-		if (sum_l >= midMax_l)
-		{
-			midMax_l = sum_l;
-			lVal = i;
-		}
-		if (a[i] == 0)
-			lflag = 1;
-
-	}
-	if(lflag==0&& midMax_l == 0)
-	lVal = 0;
-	for (int i = center + 1; i <= right; i++)   //中心向左
-	{
-		sum_r += a[i];
-		if (sum_r > midMax_r)
-		{
-			midMax_r = sum_r;
-			rVal = i;
-			if (a[i] == 0)
-				rflag = 1;
-		}
-	}
-	if(rflag==0&& midMax_r == 0)
-	rVal = N - 1;
-	Sequence midMax(midMax_l + midMax_r, lVal, rVal);
-	return max(max(leftMax, rightMax), midMax);
-
+	return 0;
 }
